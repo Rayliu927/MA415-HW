@@ -1,0 +1,178 @@
+---
+title: "SentimentAnalysis"
+author: "Zirui Liu"
+date: "4/6/2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyr)
+library(dplyr)
+library(tidytext)
+library(ggplot2)
+```
+
+## R Markdown
+```{r message=FALSE}
+trump <- read.delim("/Users/mac/Desktop/h_data/trump first state of the union.txt", header=FALSE)
+JFK <- read.delim("/Users/mac/Desktop/h_data/JFK first state of the union.txt", header = FALSE)
+# The directory address of speech text might be different.
+
+# Read speech of presidents
+tidy_trump <- data_frame(paragraph = 149, text = as.character(trump$V1)) %>% 
+  unnest_tokens(word, text)
+
+tidy_JFK <- data_frame(paragraph = 112, text= as.character(JFK$V1)) %>% 
+  unnest_tokens(word, text)
+
+# trump speech
+trump_sentiment <- tidy_trump %>% 
+  inner_join(get_sentiments("bing")) %>% 
+  count(word, sentiment, index = paragraph %/% 2) %>% 
+  spread(sentiment, n, fill = 0) %>% 
+  mutate(sentiment = positive-negative)
+
+# JFK speech
+JFK_sentiment <- tidy_JFK %>% 
+  inner_join(get_sentiments("bing")) %>% 
+  count(word, sentiment, index = paragraph %/% 3) %>% 
+  spread(sentiment, n, fill = 0) %>% 
+  mutate(sentiment = positive-negative)
+# Word count
+trump_word_counts <- tidy_trump %>% 
+  inner_join(get_sentiments("bing")) %>% 
+  count(word, sentiment, sort = TRUE)
+```
+
+## Positive/negative words for Trump's Speech
+```{r message=FALSE}
+trump_word_counts %>% 
+  group_by(sentiment) %>% 
+  top_n(10) %>% 
+  ungroup() %>% 
+  mutate(word = reorder(word, n)) %>%
+  ggplot(aes(word, n, fill = sentiment)) +
+  geom_col(show.legend = FALSE) +
+  facet_wrap(~sentiment, scales = "free_y") +
+  labs(y = "Sentiments",
+       x = NULL) +
+  ggtitle("Trump Speech") +
+  coord_flip()
+```
+
+## Positive/negative words for JFK's Speech
+```{r message=FALSE}
+JFK_word_counts <- tidy_JFK %>% 
+  inner_join(get_sentiments("bing")) %>% 
+  count(word, sentiment, sort = TRUE)
+
+JFK_word_counts %>% 
+  group_by(sentiment) %>% 
+  top_n(10) %>% 
+  ungroup() %>% 
+  mutate(word = reorder(word, n)) %>% 
+  ggplot(aes(word, n, fill = sentiment)) +
+  geom_col(show.legend = FALSE) +
+  facet_wrap(~sentiment, scales = "free_y") +
+  labs(y = "Sentiments",
+       x = NULL) +
+  ggtitle("JFK Speech") +
+  coord_flip()
+
+```
+
+## Sentiment analysis for Trump's speech
+```{r message=FALSE}
+# Sentiment analysis with nrc
+nrc_joy <- get_sentiments("nrc") %>% 
+  filter(sentiment == "joy")
+nrc_anger <- get_sentiments("nrc") %>% 
+  filter(sentiment == "anger")
+nrc_anticipation <- get_sentiments("nrc") %>% 
+  filter(sentiment == "anticipation")
+
+# Trump sentiment analysis with nrc
+trump_joy <- tidy_trump %>%
+  inner_join(nrc_joy) %>%
+  count(word, sort = TRUE) %>%
+  filter(n > 3) %>%
+  mutate(word = reorder(word, n))
+
+trump_anger <- tidy_trump %>%
+  inner_join(nrc_anger) %>%
+  count(word, sort = TRUE) %>%
+  filter(n > 2) %>%
+  mutate(word = reorder(word, n))
+
+trump_anticipation <- tidy_trump %>%
+  inner_join(nrc_anticipation) %>%
+  count(word, sort = TRUE) %>%
+  filter(n > 3) %>%
+  mutate(word = reorder(word, n))
+
+gridExtra::grid.arrange(
+  ggplot(trump_joy, aes(word, n)) +
+    geom_col() +
+    xlab(NULL) +
+    coord_flip() +
+    ggtitle("Trump Joy"),
+  ggplot(trump_anger, aes(word, n)) +
+    geom_col() +
+    xlab(NULL) +
+    coord_flip() +
+    ggtitle("Trump Anger"),
+  ggplot(trump_anticipation, aes(word, n)) +
+    geom_col() +
+    xlab(NULL) +
+    coord_flip() +
+    ggtitle("Trump Anticipation"),
+  nrow=1
+)
+```
+
+## Sentiment analysis for JFK's speech
+```{r message=FALSE}
+# JFK sentiment analysis with nrc
+JFK_joy <- tidy_JFK %>%
+  inner_join(nrc_joy) %>%
+  count(word, sort = TRUE) %>%
+  filter(n > 2) %>%
+  mutate(word = reorder(word, n))
+
+JFK_anger <- tidy_JFK %>%
+  inner_join(nrc_anger) %>%
+  count(word, sort = TRUE) %>%
+  filter(n > 1) %>%
+  mutate(word = reorder(word, n))
+
+JFK_anticipation <- tidy_JFK %>%
+  inner_join(nrc_anticipation) %>%
+  count(word, sort = TRUE) %>%
+  filter(n > 2) %>%
+  mutate(word = reorder(word, n))
+
+gridExtra::grid.arrange(
+  ggplot(JFK_joy, aes(word, n)) +
+    geom_col() +
+    xlab(NULL) +
+    coord_flip() +
+    ggtitle("JFK Joy"),
+  ggplot(JFK_anger, aes(word, n)) +
+    geom_col() +
+    xlab(NULL) +
+    coord_flip() +
+    ggtitle("JFK Anger"),
+  ggplot(JFK_anticipation, aes(word, n)) +
+    geom_col() +
+    xlab(NULL) +
+    coord_flip() +
+    ggtitle("JFK Anticipation"),
+  nrow=1
+)
+
+```
+
+
+## Conclusions
+JFK is the youngest president in American history while Donald Trump is the oldest. However, they are more alike than we think. Both of them are second son of successful families. Also, after closely fought campaigns against controversial opponents who had been on the national political scene far longer, they were unlikely presidential candidates who entered the White House. From the analysis, "finally" is the frequent word in their speech under joy sentiment. Words like "fight" and "defense" appear frequently in anger sentiment. "time" and "long" are the words that appear frequently in anticipation sentiment. If we do deeper text minning, there must be more funny facts but this is for future work. 
