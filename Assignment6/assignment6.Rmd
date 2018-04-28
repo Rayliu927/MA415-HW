@@ -16,14 +16,15 @@ library(tidyverse)
 
 ```{r message=FALSE, warning=FALSE, echo = FALSE}
 roadmap <- get_googlemap(center = c(-4.543678, 50.826636), zoom = 14, maptype = "roadmap")
+ggmap(roadmap)
 watermap <- get_map(location = c(-4.5413, 50.82435),source="stamen", zoom = 14, maptype = "watercolor")
+ggmap(watermap)
 ```
 
 # Road Map in Bude with Locations
 ## Summerleaze Beach: blue
 ## Crooklets Beach: green
 ## Bude Social Club: red
-## The Carriers Inn (Pub): purple
 ## Bude and North Cornwall Golf Club: yellow
 ## Maeer Lake: black
 
@@ -38,9 +39,6 @@ ggmap(roadmap) +
   geom_point(
     aes(x = -4.545369, y = 50.82959),
     color = "red", size = 2) +
-  geom_point(
-    aes(x = -2.669208, y =53.24418),
-    color = "purple", size = 2)+
   geom_point(
     aes(x = -4.5446, y =50.8326),
     color = "yellow", size = 2)+
@@ -63,9 +61,6 @@ ggmap(watermap) +
     aes(x = -4.545369, y = 50.82959),
     color = "red", size = 2) +
   geom_point(
-    aes(x = -2.669208, y =53.24418),
-    color = "purple", size = 2)+
-  geom_point(
     aes(x = -4.5446, y =50.8326),
     color = "yellow", size = 2)+
   geom_point(
@@ -76,12 +71,16 @@ ggmap(watermap) +
 #### Route from cricket grounds to pub
 ```{r message=FALSE}
 from <- "Bude Social Club"
-to <- "The Carriers Inn"
+to <- "Crooklets Beach"
 r <- route(from, to, structure = "route")
 ggmap(roadmap) + 
-  geom_path(aes(x = lon, y = lat), color = "blue", size = 1, data = r, lineend = "round")
+  geom_point(aes(x = -4.545369, y = 50.82959), color = "red", size = 2) +
+  geom_point(aes(x = -4.553962 , y = 50.83587), color = "green", size = 2) +
+  geom_path(aes(x = lon, y = lat), color = "black", size = 1, data = r, lineend = "round")
 ggmap(watermap) + 
-  geom_path(aes(x = lon, y = lat), color = "red", size = 1, data = r, lineend = "round")
+  geom_point(aes(x = -4.545369, y = 50.82959), color = "red", size = 2) +
+  geom_point(aes(x = -4.553962 , y = 50.83587), color = "green", size = 2) +
+  geom_path(aes(x = lon, y = lat), color = "black", size = 1, data = r, lineend = "round")
 ```
 
 
